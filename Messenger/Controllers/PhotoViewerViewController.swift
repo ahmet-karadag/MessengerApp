@@ -1,5 +1,5 @@
 //
-//  ViewController.swift
+//  PhotoViewerViewController.swift
 //  Messenger
 //
 //  Created by ahmet karadağ on 25.09.2024.
@@ -7,13 +7,12 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class PhotoViewerViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+
         // Do any additional setup after loading the view.
     }
 
-
 }
-
