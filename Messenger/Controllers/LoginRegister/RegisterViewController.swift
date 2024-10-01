@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class RegisterViewController: UIViewController {
     private let scrollView: UIScrollView = {
@@ -16,9 +17,12 @@ class RegisterViewController: UIViewController {
     
     private let imageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.circle")
-        imageView.tintColor = .green
-        imageView.contentMode = .scaleAspectFit
+        imageView.image = UIImage(systemName: "person")
+        imageView.tintColor = .gray
+        imageView.contentMode = .scaleToFill
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.lightGray.cgColor
         return imageView
     }()
     private let firstNameField: UITextField = {
@@ -118,13 +122,14 @@ class RegisterViewController: UIViewController {
     }
     
     @objc private func didTapChangeProfilePic(){
-        print("change pic func called")
+        presentPhotoActionSheet()
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         scrollView.frame = view.bounds
         let size = scrollView.width/3
         imageView.frame = CGRect(x: Int((scrollView.width-size)/2), y: 100, width: Int(size), height: Int(size))
+        imageView.layer.cornerRadius = imageView.width/2.0
         firstNameField.frame = CGRect(x: 30, y: Int(imageView.bottom + 10), width: Int(scrollView.width - 60), height: 52)
         lastNameField.frame = CGRect(x: 30, y: Int(firstNameField.bottom + 10), width: Int(scrollView.width - 60), height: 52)
         emailField.frame = CGRect(x: 30, y: Int(lastNameField.bottom + 10), width: Int(scrollView.width - 60), height: 52)
@@ -141,7 +146,17 @@ class RegisterViewController: UIViewController {
             alertUserLoginError()
             return
         }
-        //firebase login
+        //firebase register
+        
+        FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password) { authResult, error in
+            guard let result = authResult, error == nil else {
+                print("error creating user")
+                return
+            }
+            let user = result.user
+            print("create user\(user)")
+        }
+        
     }
     func alertUserLoginError(){
         let alert = UIAlertController(title: "oh no ", message: "plaese enter your all information  to create a new account", preferredStyle: .alert)
@@ -149,7 +164,7 @@ class RegisterViewController: UIViewController {
         
         present(alert, animated: true)
     }
-    
+    //we edit sign up button
     @objc private func didTapRegister(){
         let vc = RegisterViewController()
         vc.title = "create account"
@@ -170,5 +185,52 @@ extension RegisterViewController: UITextFieldDelegate {
         }
         
         return true
+    }
+}
+extension RegisterViewController: UIImagePickerControllerDelegate,UINavigationControllerDelegate {
+    
+    //take photo and choose photo actions.
+    func presentPhotoActionSheet(){
+        let actionSheet = UIAlertController(title: "profile picture", message: "How would you like to select a picture", preferredStyle: .actionSheet)
+        actionSheet.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        actionSheet.addAction(UIAlertAction(title: "take photo", style: .default, handler: { [weak self] _ in
+            self?.presentCamera()
+        }))
+        actionSheet.addAction(UIAlertAction(title: "choose photo", style: .default, handler: {
+            [weak self] _ in
+            self?.presentPhotoPicker()
+        }))
+        
+        present(actionSheet, animated: true)
+    }
+    
+    func presentCamera(){
+        let vc = UIImagePickerController()
+        vc.sourceType = .camera
+        vc.allowsEditing = true
+        vc.delegate = self
+        
+        present(vc, animated: true, completion: nil)
+    }
+    func presentPhotoPicker(){
+        let vc = UIImagePickerController()
+        vc.sourceType = .photoLibrary
+        vc.allowsEditing = true
+        vc.delegate = self
+        
+        present(vc, animated: true, completion: nil)
+    }
+    
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        picker.dismiss(animated: true)
+        guard  let selectedImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage  else {
+            
+            return
+        }
+        self.imageView.image = selectedImage
+    }
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true)
     }
 }
